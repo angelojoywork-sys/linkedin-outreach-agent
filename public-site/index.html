@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LinkedIn concept · Recently connected</title>
+<meta name="description" content="A design study: AI-drafted first messages for your newest connections, edited by voice or text. Try it and rate it.">
+<style>
+:root { --bg:#f3f2ef; --surface:#fff; --ink:#1b1b1b; --ink-2:#5c5c5c; --line:#e0dfdc; --blue:#0a66c2; --green:#01754f;
+  font-family:-apple-system,system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; font-size:15px; line-height:1.5; color:var(--ink); }
+* { box-sizing:border-box; } body { margin:0; background:var(--bg); } h1,h2,p { margin:0; }
+main { width:min(640px, 100% - 32px); margin:0 auto; padding:56px 0; display:grid; gap:20px; }
+h1 { font-size:28px; line-height:1.2; text-wrap:balance; } .sub { color:var(--ink-2); }
+.card { background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:20px; display:grid; gap:10px; }
+h2 { font-size:17px; }
+.btn { display:inline-flex; align-items:center; min-height:40px; padding:0 20px; border-radius:999px; font-weight:600; text-decoration:none; justify-self:start; }
+.primary { background:var(--blue); color:#fff; } .primary:hover { background:#004182; }
+.ghost { border:1px solid var(--ink-2); color:var(--ink); } .ghost:hover { background:#f3f3f1; }
+.row { display:flex; gap:10px; flex-wrap:wrap; }
+.note { font-size:13px; color:var(--ink-2); }
+</style>
+</head>
+<body>
+<main>
+  <div><h1>Say hello to new connections without starting from a blank box</h1>
+  <p class="sub">A design study by Angelo. An assistant drafts a first message from each person's profile. You change it by voice or text before anything is sent.</p></div>
+  <section class="card">
+    <h2>Version 2: Recently connected</h2>
+    <p class="sub">The one I kept. Takes about two minutes. Rate it at the top of the page when you are done.</p>
+    <div class="row"><a class="btn primary" href="v2-recently-connected/">Try the prototype</a><a class="btn ghost" href="results/">See live results</a></div>
+  </section>
+  <section class="card">
+    <h2>Version 1: Batch review</h2>
+    <p class="sub">An earlier idea I tried and chose not to build: drafting for up to five people at once. It took away the personal touch.</p>
+    <a class="btn ghost" href="v1-batch-review/">Look at version 1</a>
+  </section>
+  <p class="note">Unofficial design study, not affiliated with LinkedIn. Every person and message is fictional and the drafts are scripted. Ratings are anonymous: only your rating, an optional comment and which controls you tapped are saved. Chrome, Edge or Safari for voice input.</p>
+</main>
+</body>
+</html>

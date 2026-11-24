@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outreach assistant · messaging concept</title>
+<meta name="description" content="A design study: an assistant inside a professional messaging inbox that drafts personalised messages for you to review, edit by voice, and send.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <span class="brand">LinkedIn concept</span>
+    <nav class="nav" aria-label="Primary">
+      <span>Home</span><span>My Network</span><span>Jobs</span><span class="on" aria-current="page">Messaging</span>
+    </nav>
+    <span class="disclaimer">Unofficial design study. Not affiliated with LinkedIn. All people and messages are fictional.</span>
+  </div>
+</header>
+
+<main class="shell" id="shell" data-pane="list">
+  <aside class="list" aria-label="Conversations">
+    <div class="list-head">
+      <h1>Messaging</h1>
+      <button class="btn btn-primary" id="openAssistant" type="button">
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4L16 5l3 3L8 19l-4 1z"/><path d="M14 7l3 3"/></svg>
+        Draft with assistant
+      </button>
+    </div>
+    <ul class="convos" id="convos"></ul>
+  </aside>
+  <section class="pane" id="pane" aria-live="polite"></section>
+</main>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1.5"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M4 12l16-8-6 16-3-7-7-1z"/></symbol>
+</svg>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

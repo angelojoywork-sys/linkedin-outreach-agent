@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live results · LinkedIn concept</title>
+<style>
+:root { --bg:#f3f2ef; --surface:#fff; --ink:#1b1b1b; --ink-2:#5c5c5c; --line:#e0dfdc; --blue:#0a66c2; --green:#01754f; --red:#b3261e; --tint:#e6f0fa;
+  font-family:-apple-system,system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; font-size:15px; line-height:1.45; color:var(--ink); }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); }
+h1,h2,p,ul { margin:0; padding:0; } ul { list-style:none; }
+.top { background:var(--surface); border-bottom:1px solid var(--line); }
+.top-in, main { width:min(960px, 100% - 32px); margin:0 auto; }
+.top-in { display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:52px; flex-wrap:wrap; }
+.brand { font-weight:700; } .top a { color:var(--blue); font-weight:600; text-decoration:none; }
+.top a:hover { text-decoration:underline; text-underline-offset:3px; }
+main { padding:24px 0 48px; display:grid; gap:16px; }
+h1 { font-size:24px; } .lede { color:var(--ink-2); max-width:62ch; }
+.tiles { display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:12px; }
+.card { background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:16px; min-width:0; }
+.tile b { display:block; font-size:34px; line-height:1.1; font-variant-numeric:tabular-nums; }
+.tile span { color:var(--ink-2); font-size:13px; }
+h2 { font-size:16px; margin-bottom:12px; }
+.split { height:14px; border-radius:7px; background:#f0efec; overflow:hidden; display:flex; }
+.split i { display:block; height:100%; transition:width .4s; }
+.split .yes { background:var(--green); } .split .no { background:var(--red); }
+.legend { display:flex; gap:16px; margin-top:8px; font-size:13px; color:var(--ink-2); flex-wrap:wrap; }
+.bars { display:grid; gap:10px; }
+.bar { display:grid; grid-template-columns:minmax(120px, 190px) 1fr 36px; gap:12px; align-items:center; font-size:14px; }
+.bar .track { height:10px; background:#f0efec; border-radius:5px; overflow:hidden; } .bar .fill { display:block; height:100%; background:var(--blue); border-radius:5px; }
+.bar em { font-style:normal; text-align:right; font-variant-numeric:tabular-nums; color:var(--ink-2); }
+.comments { display:grid; gap:10px; } .comments li { background:var(--tint); border-radius:10px; padding:10px 14px; overflow-wrap:anywhere; }
+.empty { color:var(--ink-2); } .status { font-size:13px; color:var(--ink-2); }
+.status.err { color:var(--red); }
+@media (max-width:520px) { .bar { grid-template-columns:1fr 36px; } .bar .track { grid-column:1 / -1; grid-row:2; } }
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in"><span class="brand">LinkedIn concept</span><a href="../v2-recently-connected/">Try the prototype</a></div></header>
+<main>
+  <div><h1>Live results</h1><p class="lede">Anonymous counts from people who tried the Recently connected assistant. Fictional people, scripted drafts.</p></div>
+  <p class="status" id="status" role="status">Loading results…</p>
+  <section class="tiles" aria-label="Totals">
+    <div class="card tile"><b id="tVisitors">–</b><span>People opened it</span></div>
+    <div class="card tile"><b id="tTried">–</b><span>Tried the assistant</span></div>
+    <div class="card tile"><b id="tRated">–</b><span>Left a rating</span></div>
+    <div class="card tile"><b id="tPct">–</b><span>Found it helpful</span></div>
+  </section>
+  <section class="card" aria-labelledby="hRating">
+    <h2 id="hRating">Was it helpful?</h2>
+    <div class="split" id="split" role="img" aria-label="Share of helpful and not helpful ratings"><i class="yes" style="width:0"></i><i class="no" style="width:0"></i></div>
+    <div class="legend"><span id="lYes">Helpful: 0</span><span id="lNo">Not helpful: 0</span></div>
+  </section>
+  <section class="card" aria-labelledby="hUse">
+    <h2 id="hUse">What people tried</h2>
+    <div class="bars" id="bars"></div>
+  </section>
+  <section class="card" aria-labelledby="hCom">
+    <h2 id="hCom">What people said</h2>
+    <ul class="comments" id="comments"></ul>
+  </section>
+</main>
+<script src="../config.js"></script>
+<script>
+const cfg = window.SUPABASE_CONFIG || {};
+const $ = id => document.getElementById(id);
+const LABELS = {
+  'tone:short': 'Shorter', 'tone:warm': 'Warmer', 'tone:formal': 'More formal', 'tone:base': 'Back to intro',
+  'extra:ask': 'Ask for a chat', 'extra:portfolio': 'Share portfolio', 'extra:roles': 'Ask about roles',
+  'instruction': 'Typed an instruction', 'voice-instruction': 'Spoke an instruction', 'voice-dictation': 'Dictated a message',
+  'edit': 'Edited the draft', 'send': 'Sent a message',
+};
+
+function render(r) {
+  const rated = r.rated || 0, yes = r.helpful || 0, no = Math.max(rated - yes, 0);
+  $('tVisitors').textContent = r.visitors || 0;
+  $('tTried').textContent = r.tried || 0;
+  $('tRated').textContent = rated;
+  $('tPct').textContent = rated ? Math.round(yes / rated * 100) + '%' : '–';
+  const [y, n] = $('split').children;
+  y.style.width = rated ? yes / rated * 100 + '%' : '0';
+  n.style.width = rated ? no / rated * 100 + '%' : '0';
+  $('lYes').textContent = 'Helpful: ' + yes;
+  $('lNo').textContent = 'Not helpful: ' + no;
+
+  const entries = Object.entries(r.actions || {}).sort((a, b) => b[1] - a[1]);
+  const max = entries.length ? entries[0][1] : 1;
+  $('bars').replaceChildren(...(entries.length ? entries.map(([k, v]) => {
+    const row = document.createElement('div'); row.className = 'bar';
+    const name = document.createElement('span'); name.textContent = LABELS[k] || k;
+    const track = document.createElement('span'); track.className = 'track';
+    const fill = document.createElement('i'); fill.className = 'fill'; fill.style.width = v / max * 100 + '%';
+    track.append(fill);
+    const num = document.createElement('em'); num.textContent = v;
+    row.append(name, track, num);
+    return row;
+  }) : [Object.assign(document.createElement('p'), { className: 'empty', textContent: 'Nothing yet. Be the first to try it.' })]));
+
+  const list = r.comments || [];
+  $('comments').replaceChildren(...(list.length ? list.map(c => Object.assign(document.createElement('li'), { textContent: c.comment })) :
+    [Object.assign(document.createElement('li'), { className: 'empty', textContent: 'No comments yet.' })]));
+}
+
+async function load() {
+  if (!cfg.url || !cfg.key) { $('status').textContent = 'Demo mode: add your Supabase URL and key in config.js to see live numbers.'; render({}); return; }
+  try {
+    const res = await fetch(cfg.url.replace(/\/$/, '') + '/rest/v1/rpc/get_results', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: cfg.key, Authorization: 'Bearer ' + cfg.key },
+      body: '{}',
+    });
+    if (!res.ok) throw new Error(res.status);
+    render(await res.json());
+    $('status').className = 'status';
+    $('status').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '. Refreshes every 30 seconds.';
+  } catch {
+    $('status').className = 'status err';
+    $('status').textContent = 'Could not load results. Check config.js and that supabase.sql was run.';
+  }
+}
+load();
+setInterval(load, 30000);
+</script>
+</body>
+</html>
