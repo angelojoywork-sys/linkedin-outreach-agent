@@ -1,0 +1,205 @@
+[
+ {
+  "type": "bed",
+  "file": "Air Bed",
+  "at": 0,
+  "to": 19,
+  "db": -30,
+  "fade_in": 1.5,
+  "fade_out": 2.0,
+  "lp": 6000
+ },
+ {
+  "event": "pill.expand",
+  "file": "Pop",
+  "db": -14,
+  "align": "peak",
+  "pitch": 0.9
+ },
+ {
+  "event": "squash",
+  "file": "Soft Hit",
+  "db": -18,
+  "align": "peak",
+  "dur": 0.6
+ },
+ {
+  "event": "morph.list",
+  "file": "Whoosh 2",
+  "db": -24,
+  "align": "peak",
+  "hp": 300
+ },
+ {
+  "event": "row.0",
+  "file": "Tick",
+  "db": -24.0,
+  "align": "peak",
+  "pitch": 0.9,
+  "pan": -0.2
+ },
+ {
+  "event": "row.1",
+  "file": "Tick",
+  "db": -24.3,
+  "align": "peak",
+  "pitch": 0.9400000000000001,
+  "pan": -0.2
+ },
+ {
+  "event": "row.2",
+  "file": "Tick",
+  "db": -24.6,
+  "align": "peak",
+  "pitch": 0.98,
+  "pan": -0.2
+ },
+ {
+  "event": "row.3",
+  "file": "Tick",
+  "db": -24.9,
+  "align": "peak",
+  "pitch": 1.02,
+  "pan": -0.2
+ },
+ {
+  "event": "row.4",
+  "file": "Tick",
+  "db": -25.2,
+  "align": "peak",
+  "pitch": 1.06,
+  "pan": -0.2
+ },
+ {
+  "event": "row.5",
+  "file": "Tick",
+  "db": -25.5,
+  "align": "peak",
+  "pitch": 1.1,
+  "pan": -0.2
+ },
+ {
+  "event": "row.6",
+  "file": "Tick",
+  "db": -25.8,
+  "align": "peak",
+  "pitch": 1.1400000000000001,
+  "pan": -0.2
+ },
+ {
+  "event": "row.7",
+  "file": "Tick",
+  "db": -26.1,
+  "align": "peak",
+  "pitch": 1.1800000000000002,
+  "pan": -0.2
+ },
+ {
+  "event": "row.8",
+  "file": "Tick",
+  "db": -26.4,
+  "align": "peak",
+  "pitch": 1.22,
+  "pan": -0.2
+ },
+ {
+  "event": "row.9",
+  "file": "Tick",
+  "db": -26.7,
+  "align": "peak",
+  "pitch": 1.26,
+  "pan": -0.2
+ },
+ {
+  "event": "morph.window",
+  "file": "Whoosh 3",
+  "db": -24,
+  "align": "peak"
+ },
+ {
+  "event": "lift",
+  "file": "Whoosh 1",
+  "db": -27,
+  "align": "peak"
+ },
+ {
+  "event": "chip.0",
+  "file": "Pop",
+  "db": -21,
+  "align": "peak",
+  "pitch": 1.1
+ },
+ {
+  "event": "chip.1",
+  "file": "Pop",
+  "db": -21,
+  "align": "peak",
+  "pitch": 1.25
+ },
+ {
+  "event": "chip.2",
+  "file": "Pop",
+  "db": -21,
+  "align": "peak",
+  "pitch": 1.4000000000000001
+ },
+ {
+  "event": "mic.on",
+  "file": "Pop",
+  "db": -15,
+  "align": "peak",
+  "pitch": 1.3
+ },
+ {
+  "event": "apply",
+  "file": "Shutter",
+  "db": -17,
+  "align": "peak"
+ },
+ {
+  "event": "rewrite",
+  "file": "Whoosh 1",
+  "db": -27,
+  "align": "peak"
+ },
+ {
+  "event": "send",
+  "file": "Soft Hit",
+  "db": -14,
+  "align": "peak",
+  "dur": 0.7
+ },
+ {
+  "event": "sent",
+  "file": "Tick",
+  "db": -18,
+  "align": "peak",
+  "pitch": 1.5
+ },
+ {
+  "event": "collapse",
+  "file": "Whoosh 3",
+  "db": -22,
+  "align": "peak"
+ },
+ {
+  "event": "mark",
+  "file": "Soft Hit",
+  "db": -12,
+  "align": "peak",
+  "dur": 1.2
+ },
+ {
+  "event": "mark",
+  "file": "Pop",
+  "db": -16,
+  "align": "peak",
+  "pitch": 1.6
+ },
+ {
+  "event": "wordmark",
+  "file": "Whoosh 1",
+  "db": -30,
+  "align": "peak"
+ }
+]

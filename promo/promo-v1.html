@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Outreach assistant promo</title>
+<style>html,body{margin:0;background:#000;height:100%}body{display:flex;align-items:center;justify-content:center}canvas{width:min(100vw,calc(100vh*16/9));aspect-ratio:16/9;display:block}</style></head>
+<body><canvas id="c"></canvas>
+<script src="gl3d.js"></script>
+<script>
+// Outreach assistant promo (19s, 16:9). Real v2 screens (captured at 4x) as 3D panels, one continuous camera, shape morphs between shots.
+// Page contract: renderAt(t), TOTAL, ready, EVENTS, ?t= for a still, ?scale=2 for 4K.
+const W = 1920, H = 1080, q = new URLSearchParams(location.search), SCALE = parseFloat(q.get('scale') || '1');
+const TOTAL = 19, FONT = '-apple-system, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif';
+// ---- every beat time lives here ----
+const B = {
+  hook: [0.05, 1.0], head1: [0.75, 2.0], squash: [2.0, 2.3], m1: [2.3, 3.4], rows: [3.2, 4.7], head2: [3.7, 4.95],
+  m2: [5.0, 6.4], head3: [6.0, 8.1], lift: [6.5, 7.6], chips: 7.0, chipsOut: 8.3, head4: [8.4, 10.7],
+  listen: 8.6, type: [9.0, 10.4], apply: 10.7, rewrite: [10.8, 11.6], head5: [11.5, 13.3],
+  send: 13.6, lower: [13.7, 14.6], sentX: [14.05, 14.55], head6: [14.15, 15.3], col: [15.4, 16.6], camY: [15.3, 16.9],
+  wm: 16.7, tag: 17.3, spec: 17.9, sweep: [17.0, 18.4], camEnd: 16.8,
+};
+window.EVENTS = [['pill.expand', B.hook[0]], ['head', B.head1[0]], ['squash', B.squash[0]], ['morph.list', B.m1[0] + 0.15]]
+  .concat(Array.from({ length: 10 }, (_, i) => ['row.' + i, B.rows[0] + i * 0.085]))
+  .concat([['morph.window', B.m2[0]], ['lift', B.lift[0]], ['chip.0', B.chips], ['chip.1', B.chips + 0.14], ['chip.2', B.chips + 0.28], ['mic.on', B.listen], ['apply', B.apply], ['rewrite', B.rewrite[0]],
+    ['send', B.send], ['sent', B.sentX[0] + 0.2], ['collapse', B.col[0]], ['mark', B.col[1]], ['wordmark', B.wm], ['tagline', B.tag], ['end', B.spec]]).map(([name, t]) => ({ name, t }));
+
+const cv = document.getElementById('c'); cv.width = W * SCALE; cv.height = H * SCALE; const MAIN = cv.getContext('2d'); let ctx = MAIN, NOW = 0, CTS = 1;
+const mk = () => { const c = document.createElement('canvas'); c.width = cv.width; c.height = cv.height; return c; };
+const BG = mk(), TMP = mk(), ACC = mk(), S3 = GL3D.create(W * SCALE, H * SCALE);
+const clamp01 = v => Math.max(0, Math.min(1, v)), lerp = (a, b, k) => a + (b - a) * k, prog = (t, a, b) => clamp01((t - a) / (b - a));
+const easeIO = k => { k = clamp01(k); return k * k * k * (k * (6 * k - 15) + 10); }, outCubic = k => 1 - Math.pow(1 - clamp01(k), 3), outExpo = k => (k = clamp01(k)) >= 1 ? 1 : 1 - Math.pow(2, -10 * k);
+const sine = k => 0.5 - 0.5 * Math.cos(Math.PI * clamp01(k));
+const rr = (g, x, y, w, h, r) => { g.beginPath(); g.roundRect(x, y, Math.max(0.1, w), Math.max(0.1, h), Math.max(0, Math.min(r, w / 2, h / 2))); };
+const mix = (a, b, k) => a.map((v, i) => Math.round(lerp(v, b[i], k)));
+
+// ---- real screens ----
+const DPR = 4, IMGN = ['draft', 'mic0', 'warm', 'sentMeera'], IMG = {}, RC = {};
+const loadAll = () => Promise.all(IMGN.map(async n => { IMG[n] = await new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = 'shots/' + n + '.png'; }); RC[n] = await (await fetch('shots/' + n + '.json')).json(); }));
+const blit = (g, n, r, dx, dy, dw, dh) => { if (dw == null) { dw = r[2]; dh = r[3]; } g.drawImage(IMG[n], r[0] * DPR, r[1] * DPR, r[2] * DPR, r[3] * DPR, dx, dy, dw, dh); };
+function panel(w, h, pad, ts, draw) {
+  const c = document.createElement('canvas'); c.width = Math.ceil((w + pad * 2) * ts); c.height = Math.ceil((h + pad * 2) * ts); const p = { c, w: w + pad * 2, h: h + pad * 2, tex: null, key: null };
+  p.redraw = key => { if (key === p.key && p.tex) return p; p.key = key; const g = c.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height); g.setTransform(ts, 0, 0, ts, pad * ts, pad * ts);
+    const keep = ctx, kts = CTS; ctx = g; CTS = ts; draw(); ctx = keep; CTS = kts; if (p.tex) p.tex.update(); else p.tex = S3.texture(c); return p; };
+  return p;
+}
+const WW = 1128, WH = 868, PAD = 70;
+const GREEN = [1, 117, 79], BLUE = '#0a66c2', SPARK = new Path2D('M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z');
+const WORLD = { win: [0, 0], strip: [170, -129.2], draft: [170, -298.5] };   // world (x right, y up) of each piece in its resting place, window centre = 0,0
+const cssToWorld = (cx, cy) => [cx - WW / 2, WH / 2 - cy];
+
+// ---- window: pill -> list -> conversation -> sent -> app mark ----
+function drawWin() {
+  const g = ctx, t = NOW; g.save();
+  const cs = easeIO(prog(t, B.col[0], B.col[1])), mw = lerp(WW, WH, cs), mx = (WW - mw) / 2, mr = lerp(10, 190, cs);
+  const e2 = easeIO(prog(t, B.m2[0], B.m2[1])), xList = lerp(394, 0, e2), rows = RC.draft.rows;
+  if (t >= B.m2[1] + 0.02) {
+    rr(g, mx, 0, mw, WH, mr); g.clip();
+    blit(g, 'draft', [0, 0, WW, WH], 0, 0, WW, WH);
+    const comp = RC.draft.composer, cov = prog(t, B.lift[0], B.lift[0] + 0.04);
+    if (cov > 0) { g.globalAlpha = cov; g.fillStyle = '#fff'; g.fillRect(comp[0] + 1, comp[1] + 1, comp[2] - 2, 820 - comp[1] - 1); g.globalAlpha = 1; }
+    const sx = easeIO(prog(t, B.sentX[0], B.sentX[1])); if (sx > 0) { g.globalAlpha = sx; blit(g, 'sentMeera', [0, 0, WW, WH], 0, 0, WW, WH); g.globalAlpha = 1; }
+    const sp = prog(t, B.send, B.send + 0.7), sd = RC.draft.send;   // send press: button darkens, ring expands
+    if (sp > 0 && sp < 1) { const cx = sd[0] + sd[2] / 2, cy = sd[1] + sd[3] / 2, k = outCubic(sp); g.globalAlpha = (1 - prog(sp, 0, .35)) * .9; g.fillStyle = '#004182'; rr(g, sd[0], sd[1], sd[2], sd[3], 17); g.fill();
+      g.globalAlpha = .55 * (1 - k); g.strokeStyle = BLUE; g.lineWidth = 3; rr(g, sd[0] - 26 * k, sd[1] - 26 * k, sd[2] + 52 * k, sd[3] + 52 * k, 17 + 26 * k); g.stroke(); g.globalAlpha = 1; }
+    if (cs > 0) {   // collapse into the app mark
+      const gr = g.createLinearGradient(mx, 0, mx + mw, WH); gr.addColorStop(0, '#01754f'); gr.addColorStop(1, '#0a66c2'); g.globalAlpha = easeIO(prog(cs, .3, .8)); g.fillStyle = gr; g.fillRect(0, 0, WW, WH);
+      g.globalAlpha = easeIO(prog(cs, .72, 1)); g.fillStyle = '#fff'; g.save(); g.translate(WW / 2 - WH * .27, WH / 2 - WH * .27); g.scale(WH * .54 / 24, WH * .54 / 24); g.fill(SPARK); g.restore(); g.globalAlpha = 1; }
+  } else {
+    const hook = easeIO(prog(t, B.hook[0], B.hook[1])), sq = easeIO(prog(t, B.squash[0], B.squash[1])), pw = lerp(160, 1000, hook) * (1 + .05 * sq), ph = 160 * (1 - .09 * sq);
+    const P = [WW / 2 - pw / 2, WH / 2 - ph / 2, pw, ph], LR = [xList, 0, 340, WH], e1 = easeIO(prog(t, B.m1[0], B.m1[1]));
+    const R = P.map((v, i) => lerp(v, LR[i], e1)), rad = e1 < 1 ? lerp(ph / 2, 14, e1) : lerp(14, 0, e2);
+    if (e2 > 0) {   // conversation grows out of the selected row, glued to the list's right edge
+      const lr = xList + 340, row = rows[0], x0 = lr - 2, top = lerp(row[1], 1, e2), bot = lerp(row[1] + row[3], 867, e2), right = lerp(lr + 10, 1127, e2);
+      g.save(); rr(g, x0, top, right - x0, bot - top, lerp(8, 0, e2)); g.clip(); g.fillStyle = `rgb(${mix([230, 240, 250], [255, 255, 255], prog(e2, .2, .7))})`; g.fillRect(0, 0, WW, WH);
+      g.globalAlpha = prog(e2, .35, .85); blit(g, 'draft', RC.draft.pane, RC.draft.pane[0], RC.draft.pane[1]); g.restore();
+    }
+    if (t >= B.hook[0]) {
+      g.save(); rr(g, R[0], R[1], R[2], R[3], rad); g.shadowColor = 'transparent'; g.fillStyle = `rgb(${mix(GREEN, [255, 255, 255], prog(e1, .35, 1))})`; g.fill(); g.clip();
+      const pa = (1 - prog(e1, 0, .4)); if (pa > 0) {
+        const cy = P[1] + ph / 2; g.globalAlpha = pa * prog(pw, 420, 720); g.fillStyle = '#fff'; g.font = `600 ${60 * (ph / 160)}px ${FONT}`; g.textBaseline = 'middle'; g.textAlign = 'left'; g.fillText('Recently connected', P[0] + 66, cy + 2);
+        g.globalAlpha = pa; const bx = P[0] + pw - 30 - 50; g.beginPath(); g.arc(bx, cy, 50 * (ph / 160), 0, 7); g.fillStyle = '#fff'; g.fill(); g.fillStyle = '#01754f'; g.font = `700 ${46 * (ph / 160)}px ${FONT}`; g.textAlign = 'center'; g.fillText('10', bx, cy + 2); g.globalAlpha = 1; }
+      const hd = RC.draft.listHead; g.globalAlpha = prog(e1, .4, .9); blit(g, 'draft', hd, xList + hd[0], hd[1]); g.globalAlpha = 1;
+      rows.forEach((r, i) => { const a = outCubic(prog(t, B.rows[0] + i * 0.085, B.rows[0] + i * 0.085 + 0.5)); if (a <= 0 || r[1] >= WH - 2) return; const h = Math.min(r[3], WH - 1 - r[1]); g.globalAlpha = a; blit(g, 'draft', [r[0], r[1], r[2], h], xList + r[0], r[1] + (1 - a) * 22, r[2], h); }); g.globalAlpha = 1;
+      g.restore();
+    }
+  }
+  g.restore();
+}
+
+// ---- raised assistant strip ----
+function shadowOn(g, k) { g.shadowColor = `rgba(0,10,20,${0.38 * k})`; g.shadowBlur = 46 * CTS; g.shadowOffsetY = 20 * CTS; }
+function drawStrip() {
+  const g = ctx, t = NOW, H0 = RC.warm.assist[3], lift = easeIO(prog(t, B.lift[0], B.lift[1])), alive = 1 - easeIO(prog(t, B.lower[0], B.lower[0] + 0.6));
+  const a1 = easeIO(prog(t, B.listen, B.listen + 0.3)), a2 = easeIO(prog(t, B.apply + 0.08, B.apply + 0.45));
+  g.save(); shadowOn(g, lift * alive); g.fillStyle = '#e6f0fa'; rr(g, 0, H0 - RC.draft.assist[3], 754, RC.draft.assist[3] + (H0 - (H0 - RC.draft.assist[3])) * 0, 10); g.fill(); g.restore();
+  g.save(); rr(g, 0, 0, 754, H0, 10); g.clip(); g.fillStyle = '#e6f0fa';
+  const drawS = (n, alpha) => { const a = RC[n].assist; g.globalAlpha = alpha; g.fillRect(0, H0 - a[3], 754, a[3]); blit(g, n, a, 0, H0 - a[3], a[2], a[3]); };
+  drawS('draft', 1 - a1); if (a1 > 0) drawS('mic0', a1 * (1 - a2)); if (a2 > 0) drawS('warm', a2); g.globalAlpha = 1;
+  if (t >= B.listen && t < B.apply + 0.3) {
+    const m = RC.mic0, as = m.assist, oy = H0 - as[3], fo = 1 - prog(t, B.apply, B.apply + 0.22), ask = m.ask;
+    // pulse rings on the mic
+    const mc = [m.askMic[0] + 18 - as[0], oy + m.askMic[1] + 18 - as[1]]; g.lineWidth = 2; g.strokeStyle = '#b3261e';
+    for (let k = 0; k < 3; k++) { const ph = (((t - B.listen) / 1.5) + k / 3) % 1; g.globalAlpha = .55 * (1 - ph) * a1 * fo; g.beginPath(); g.arc(mc[0], mc[1], lerp(19, 50, outCubic(ph)), 0, 7); g.stroke(); }
+    // typed instruction, word by word
+    g.font = `15px ${FONT}`; g.textBaseline = 'middle'; g.fillStyle = '#1b1b1b'; let x = ask[0] - as[0] + 13; const y = oy + ask[1] - as[1] + ask[3] / 2 + 1;
+    'make it warmer and ask for a quick chat'.split(' ').forEach((w, i, arr) => { const ts = B.type[0] + i * (B.type[1] - B.type[0]) / arr.length, a = outCubic(prog(t, ts, ts + .28)); g.globalAlpha = a * fo; g.filter = `blur(${(1 - a) * 3 * CTS}px)`; g.fillText(w, x, y + (1 - a) * 3); g.filter = 'none'; x += g.measureText(w + ' ').width; });
+    // apply press
+    const ap = RC.mic0.apply, pp = prog(t, B.apply - 0.1, B.apply + 0.3); if (pp > 0 && pp < 1) { g.globalAlpha = (1 - pp) * .9; g.fillStyle = 'rgba(10,102,194,0.22)'; rr(g, ap[0] - as[0], oy + ap[1] - as[1], ap[2], ap[3], 17); g.fill(); }
+  }
+  g.restore();
+}
+function drawDraft() {
+  const g = ctx, t = NOW, r = RC.draft.compose, w = r[2], h = r[3], lift = easeIO(prog(t, B.lift[0], B.lift[1])), alive = 1 - easeIO(prog(t, B.lower[0], B.lower[0] + 0.6));
+  g.save(); shadowOn(g, lift * alive); g.fillStyle = '#f3f2ef'; rr(g, 0, 0, w, h, 8); g.fill(); g.restore();
+  const p = easeIO(prog(t, B.rewrite[0], B.rewrite[1])), tmp = draftTmp(w, h), tg = tmp.getContext('2d');
+  tg.setTransform(1, 0, 0, 1, 0, 0); tg.clearRect(0, 0, tmp.width, tmp.height); tg.setTransform(CTS, 0, 0, CTS, 0, 0);
+  tg.fillStyle = '#f3f2ef'; tg.fillRect(0, 0, w, h);
+  tg.globalAlpha = 1 - p; blit(tg, 'draft', r, 0, -p * 34, w, h); tg.globalAlpha = p; blit(tg, 'warm', RC.warm.compose, 0, (1 - p) * 34, w, h); tg.globalAlpha = 1;
+  const f = Math.sin(Math.PI * p); if (f > 0.01) { tg.globalCompositeOperation = 'destination-out'; for (const [y0, y1] of [[0, 34], [h, h - 34]]) { const gr = tg.createLinearGradient(0, y0, 0, y1); gr.addColorStop(0, `rgba(0,0,0,${f})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); tg.fillStyle = gr; tg.fillRect(0, Math.min(y0, y1), w, 34); } tg.globalCompositeOperation = 'source-over'; }
+  g.save(); rr(g, 0, 0, w, h, 8); g.clip(); g.drawImage(tmp, 0, 0, w, h); g.restore();
+}
+let _tmp = null; const draftTmp = (w, h) => { const W2 = Math.ceil(w * CTS), H2 = Math.ceil(h * CTS); if (!_tmp) _tmp = document.createElement('canvas'); if (_tmp.width !== W2) { _tmp.width = W2; _tmp.height = H2; } return _tmp; };
+
+// ---- screen-space text: each word fades up from blurred to sharp ----
+function words(g, str, y, tIn, tOut, t, size, o = {}) {
+  const sc = SCALE; g.save(); g.font = `${o.weight || 600} ${size * sc}px ${FONT}`; g.letterSpacing = `${-0.03 * size * sc}px`; g.textBaseline = 'alphabetic'; g.textAlign = 'left';
+  const ws = str.split(' '), sp = g.measureText(' ').width, wd = ws.map(w => g.measureText(w).width), tot = wd.reduce((a, b) => a + b, 0) + sp * (ws.length - 1); let x = (W * sc - tot) / 2;
+  ws.forEach((w, i) => { const ai = outCubic(prog(t, tIn + i * .085, tIn + i * .085 + .6)), ao = tOut == null ? 0 : prog(t, tOut + i * .05, tOut + i * .05 + .45), k = ai * (1 - ao);
+    if (k > 0.003) { const bl = (1 - ai) * 14 + ao * 10, dy = (1 - ai) * 18 - ao * 14; g.filter = bl > .2 ? `blur(${bl * sc}px)` : 'none'; g.globalAlpha = k;
+      const gr = g.createLinearGradient(0, (y - size * .75) * sc, 0, (y + size * .22) * sc); gr.addColorStop(0, o.top || '#ffffff'); gr.addColorStop(.55, o.top || '#ffffff'); gr.addColorStop(1, o.bot || '#9aa6b3'); g.fillStyle = gr; g.fillText(w, x, (y + dy) * sc); }
+    x += wd[i] + sp; });
+  g.restore();
+}
+
+// ---- tiny vector chips that lift off the strip ----
+const CHIPS = []; const T = {};
+function build() {
+  T.win = panel(WW, WH, 0, 2.4, drawWin); T.strip = panel(754, RC.warm.assist[3], PAD, 3, drawStrip); T.draft = panel(754, 157, PAD, 3, drawDraft);
+  RC.draft.basisLi.forEach(c => { const r = c.r; CHIPS.push({ r, p: panel(r[2], r[3], 28, 3, () => { const g = ctx; g.save(); shadowOn(g, 1); g.fillStyle = '#fff'; rr(g, 0, 0, r[2], r[3], r[3] / 2); g.fill(); g.restore(); g.fillStyle = '#3d3d3d'; g.font = `500 12px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(c.t, r[2] / 2, r[3] / 2 + 0.5); }).redraw('x') }); });
+}
+
+function camera(t) {
+  const k = 1 - Math.pow(1 - prog(t, 0, B.camEnd), 2.4), D = Math.exp(lerp(Math.log(2400), Math.log(1850), k)), th = 0.05 * k;
+  const tx = 170 * sine(prog(t, 4.2, 8.4)), ty = lerp(-10, -150, easeIO(prog(t, B.camY[0], B.camY[1]))), target = [tx, ty, 0];
+  return { eye: [tx + D * Math.sin(th), ty + D * 0.03, D * Math.cos(th)], target, fov: 36, focus: D, aperture: 0.5 };
+}
+function scene(t) {
+  const lift = easeIO(prog(t, B.lift[0], B.lift[1])), low = easeIO(prog(t, B.lower[0], B.lower[1])), cs = easeIO(prog(t, B.col[0], B.col[1])), P = [];
+  const sheen = prog(t, B.sweep[0], B.sweep[1]);
+  P.push({ tex: T.win.tex, w: T.win.w, h: T.win.h, pos: [lerp(0, 170, cs), lerp(0, -20, cs), 0], scale: lerp(1, 0.26, cs), blur: 0.9 * lift * (1 - low), sheen: sheen > 0 && sheen < 1 ? 0.3 : 0, sheenPos: lerp(-0.3, 1.3, easeIO(sheen)) });
+  const alive = 1 - easeIO(prog(t, B.lower[0], B.lower[0] + 0.6)), out = easeIO(prog(t, B.lower[0], B.lower[1] + 0.2));
+  if (lift > 0 && alive > 0) {
+    P.push({ tex: T.strip.tex, w: T.strip.w, h: T.strip.h, pos: [WORLD.strip[0], lerp(WORLD.strip[1], 40, lift) + 130 * out, lerp(0, 130, lift) + 70 * out], scale: lerp(1, 1.1, lift) + .08 * out, alpha: alive, bias: 100 });
+    P.push({ tex: T.draft.tex, w: T.draft.w, h: T.draft.h, pos: [WORLD.draft[0], lerp(WORLD.draft[1], -135, lift) + 130 * out, lerp(0, 90, lift) + 70 * out], scale: lerp(1, 1.05, lift) + .08 * out, alpha: alive, bias: 100 });
+    CHIPS.forEach((c, i) => { const ts = B.chips + i * 0.14, k = outCubic(prog(t, ts, ts + .9)), drift = prog(t, ts + .9, B.chipsOut + 1.2), a = prog(t, ts, ts + .2) * (1 - prog(t, B.chipsOut + i * .1, B.chipsOut + i * .1 + .5)) * alive;
+      if (a <= 0) return; const w0 = cssToWorld(c.r[0] + c.r[2] / 2, c.r[1] + c.r[3] / 2), sc = 1.1 + .9 * k;
+      P.push({ tex: c.p.tex, w: c.p.w, h: c.p.h, pos: [WORLD.strip[0] + (w0[0] - WORLD.strip[0]) * sc, lerp(WORLD.strip[1], 40, lift) + (w0[1] - WORLD.strip[1]) * 1.1 + 92 * k + 30 * drift, 150 + 60 * k + 20 * drift], scale: sc, alpha: a, bias: 200 }); });
+  }
+  return P;
+}
+const SUB = 6, SHUTTER = 0.5 / 25;
+let built = false;
+function render(t) {
+  if (!built) { build(); built = true; }
+  NOW = t; const fq = Math.round(t * 1000);
+  T.win.redraw(fq); if (t >= B.lift[0] - 0.01 && t < B.lower[1] + 0.8) { T.strip.redraw(fq); T.draft.redraw(fq); }
+  // backdrop
+  const bg = BG.getContext('2d'); bg.setTransform(SCALE, 0, 0, SCALE, 0, 0); bg.fillStyle = '#05070a'; bg.fillRect(0, 0, W, H);
+  let gr = bg.createRadialGradient(W * .5, H * .52, 40, W * .5, H * .52, W * .72); gr.addColorStop(0, '#121b24'); gr.addColorStop(1, '#05070a'); bg.fillStyle = gr; bg.fillRect(0, 0, W, H);
+  const pulse = Math.exp(-Math.pow((t - B.col[1]) / 0.5, 2));
+  gr = bg.createRadialGradient(W * .30, H * .62, 0, W * .30, H * .62, 620); gr.addColorStop(0, `rgba(1,117,79,${.20 + .14 * pulse})`); gr.addColorStop(1, 'rgba(1,117,79,0)'); bg.fillStyle = gr; bg.fillRect(0, 0, W, H);
+  gr = bg.createRadialGradient(W * .72, H * .40, 0, W * .72, H * .40, 680); gr.addColorStop(0, `rgba(10,102,194,${.19 + .14 * pulse})`); gr.addColorStop(1, 'rgba(10,102,194,0)'); bg.fillStyle = gr; bg.fillRect(0, 0, W, H);
+  const A = ACC.getContext('2d'); A.setTransform(1, 0, 0, 1, 0, 0); A.globalAlpha = 1; A.clearRect(0, 0, ACC.width, ACC.height);
+  for (let i = 0; i < SUB; i++) { const ts = Math.max(0, Math.min(TOTAL, t + (i / (SUB - 1) - 0.5) * SHUTTER)), cam = camera(ts), g = TMP.getContext('2d');
+    g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.drawImage(BG, 0, 0); g.drawImage(S3.render(scene(ts), cam), 0, 0); A.globalAlpha = 1 / (i + 1); A.drawImage(TMP, 0, 0); }
+  ctx = MAIN; MAIN.setTransform(1, 0, 0, 1, 0, 0); MAIN.globalAlpha = 1; MAIN.drawImage(ACC, 0, 0);
+  const g = MAIN;   // text on top, crisp
+  words(g, 'Ten new connections.', 124, B.head1[0], B.head1[1] + .3, t, 60);
+  words(g, 'Each one already has a draft.', 124, B.head2[0], B.head2[1], t, 60);
+  words(g, 'Written from their profile.', 104, B.head3[0], B.head3[1], t, 60);
+  words(g, 'Say what to change.', 104, B.head4[0], B.head4[1], t, 60);
+  words(g, 'Change it by voice or text.', 104, B.head5[0], B.head5[1], t, 60);
+  words(g, 'You review. You send.', 104, B.head6[0], B.head6[1], t, 60);
+  words(g, 'Outreach assistant', 690, B.wm, null, t, 92);
+  words(g, 'Say hello, personally.', 770, B.tag, null, t, 38, { weight: 400, top: '#b7c0ca', bot: '#8a95a1' });
+  const sa = outCubic(prog(t, B.spec, B.spec + 0.9)); if (sa > 0) { g.save(); g.globalAlpha = sa * .75; g.fillStyle = '#8a95a1'; g.font = `400 ${20 * SCALE}px ${FONT}`; g.textAlign = 'center'; g.letterSpacing = '0px'; g.fillText('Design concept. Not affiliated with LinkedIn. All people and messages are fictional.', W * SCALE / 2, 1030 * SCALE); g.restore(); }
+}
+window.TOTAL = TOTAL; window.renderAt = t => render(t);
+window.ready = loadAll().then(() => { if (q.has('t')) render(parseFloat(q.get('t'))); else (function tick(n) { render((n / 1000) % TOTAL); requestAnimationFrame(tick); })(0); return true; });
+</script></body></html>

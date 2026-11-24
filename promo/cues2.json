@@ -1,0 +1,163 @@
+[
+ {
+  "type": "bed",
+  "file": "air",
+  "at": 0,
+  "to": 19.8,
+  "db": -37,
+  "fade_in": 2.0,
+  "fade_out": 2.5
+ },
+ {
+  "event": "badge",
+  "file": "blip_up",
+  "db": -19,
+  "align": "start"
+ },
+ {
+  "at": 3.0,
+  "file": "swell_long",
+  "db": -27,
+  "align": "peak"
+ },
+ {
+  "event": "row.0",
+  "file": "kal_D5",
+  "db": -26.0,
+  "align": "peak",
+  "pan": -0.25
+ },
+ {
+  "event": "row.1",
+  "file": "kal_E5",
+  "db": -25.8,
+  "align": "peak",
+  "pan": -0.2
+ },
+ {
+  "event": "row.2",
+  "file": "kal_F5",
+  "db": -25.6,
+  "align": "peak",
+  "pan": -0.15
+ },
+ {
+  "event": "row.3",
+  "file": "kal_A5",
+  "db": -25.4,
+  "align": "peak",
+  "pan": -0.09999999999999998
+ },
+ {
+  "event": "row.4",
+  "file": "kal_B5",
+  "db": -25.2,
+  "align": "peak",
+  "pan": -0.04999999999999999
+ },
+ {
+  "event": "row.5",
+  "file": "kal_D6",
+  "db": -25.0,
+  "align": "peak",
+  "pan": 0.0
+ },
+ {
+  "event": "row.6",
+  "file": "kal_E6",
+  "db": -24.8,
+  "align": "peak",
+  "pan": 0.050000000000000044
+ },
+ {
+  "event": "row.7",
+  "file": "kal_F6",
+  "db": -24.6,
+  "align": "peak",
+  "pan": 0.10000000000000003
+ },
+ {
+  "event": "row.8",
+  "file": "kal_A6",
+  "db": -24.4,
+  "align": "peak",
+  "pan": 0.15000000000000002
+ },
+ {
+  "event": "row.9",
+  "file": "kal_B6",
+  "db": -24.2,
+  "align": "peak",
+  "pan": 0.2
+ },
+ {
+  "at": 5.75,
+  "file": "swell_short",
+  "db": -29,
+  "align": "peak"
+ },
+ {
+  "at": 6.95,
+  "file": "swell_short",
+  "db": -30,
+  "align": "peak"
+ },
+ {
+  "event": "chip.0",
+  "file": "kal_A5",
+  "db": -23,
+  "align": "peak",
+  "pan": 0.0
+ },
+ {
+  "event": "chip.1",
+  "file": "kal_D6",
+  "db": -23,
+  "align": "peak",
+  "pan": 0.1
+ },
+ {
+  "event": "chip.2",
+  "file": "kal_F6",
+  "db": -23,
+  "align": "peak",
+  "pan": 0.2
+ },
+ {
+  "event": "mic.on",
+  "file": "blip_up",
+  "db": -20,
+  "align": "start"
+ },
+ {
+  "event": "apply",
+  "file": "click",
+  "db": -19,
+  "align": "peak"
+ },
+ {
+  "at": 11.2,
+  "file": "swell_short",
+  "db": -30,
+  "align": "peak"
+ },
+ {
+  "event": "send",
+  "file": "thock",
+  "db": -14,
+  "align": "peak"
+ },
+ {
+  "event": "send",
+  "file": "click",
+  "db": -23,
+  "align": "peak",
+  "offset": 0.02
+ },
+ {
+  "event": "land",
+  "file": "kal_D6",
+  "db": -22,
+  "align": "peak"
+ }
+]

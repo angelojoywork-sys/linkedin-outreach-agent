@@ -1,0 +1,27 @@
+[
+ {
+  "event": "mic.on",
+  "file": "blip_up",
+  "db": -26,
+  "align": "start"
+ },
+ {
+  "event": "apply",
+  "file": "click",
+  "db": -19,
+  "align": "peak"
+ },
+ {
+  "event": "send",
+  "file": "thock",
+  "db": -14,
+  "align": "peak"
+ },
+ {
+  "event": "send",
+  "file": "click",
+  "db": -23,
+  "align": "peak",
+  "offset": 0.02
+ }
+]

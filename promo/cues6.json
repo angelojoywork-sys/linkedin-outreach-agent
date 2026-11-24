@@ -1,0 +1,86 @@
+[
+ {
+  "type": "bed",
+  "file": "cyberline-slow",
+  "at": 0,
+  "to": 28.5,
+  "db": -17,
+  "from": 0.125,
+  "fade_in": 1.0,
+  "fade_out": 2.6
+ },
+ {
+  "event": "badge",
+  "file": "dry-pop",
+  "db": -18,
+  "align": "peak"
+ },
+ {
+  "event": "open",
+  "file": "quick-air",
+  "db": -27,
+  "align": "peak"
+ },
+ {
+  "event": "fan.0",
+  "offset": -0.2,
+  "file": "tech-transition",
+  "db": -21,
+  "align": "start"
+ },
+ {
+  "event": "lift",
+  "file": "slide-click",
+  "db": -21,
+  "align": "peak"
+ },
+ {
+  "event": "chip.0",
+  "file": "melodic-tone",
+  "db": -22,
+  "align": "peak"
+ },
+ {
+  "event": "mic.on",
+  "file": "melodic-tone",
+  "db": -24,
+  "align": "peak",
+  "pitch": 1.3
+ },
+ {
+  "event": "apply",
+  "file": "positive-selection",
+  "db": -20,
+  "align": "peak"
+ },
+ {
+  "event": "send",
+  "file": "box-check",
+  "db": -17,
+  "align": "peak"
+ },
+ {
+  "event": "send",
+  "file": "short-bass",
+  "db": -23,
+  "align": "peak"
+ },
+ {
+  "event": "land",
+  "file": "dry-pop",
+  "db": -22,
+  "align": "peak"
+ },
+ {
+  "event": "icon",
+  "file": "reverse-swell",
+  "db": -21,
+  "align": "end"
+ },
+ {
+  "event": "wordmark",
+  "file": "sub-boom",
+  "db": -21,
+  "align": "start"
+ }
+]
